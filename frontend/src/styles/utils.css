@@ -1,0 +1,48 @@
+/* Layout helpers */
+.container-xl{max-width:1120px;margin:0 auto;padding:0 16px}
+.grid-rows{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh}
+
+/* Cards */
+.card{
+  background:color-mix(in srgb, var(--card) 90%, transparent);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.card-header{padding:20px 20px 8px;border-bottom:1px solid var(--stroke)}
+.card-title{margin:0;font-weight:700;font-size:18px}
+.card-content{padding:16px 20px}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;border-radius:12px;border:0;cursor:pointer;
+  font-weight:600;transition:background .2s, opacity .2s;
+}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-primary{background:var(--gold);color:#000}
+.btn-primary:hover{background:var(--gold-2)}
+.btn-ghost{background:transparent;color:var(--text)}
+.btn-ghost:hover{background:rgba(255,255,255,.05)}
+
+/* Inputs */
+.input{
+  width:100%;border-radius:12px;border:1px solid var(--stroke);
+  background:transparent;color:var(--text);padding:10px 12px;
+}
+.input::placeholder{color:var(--muted)}
+.label{display:block;margin-bottom:6px;color:var(--muted);font-size:13px}
+
+/* Header/Footer */
+.header{border-bottom:1px solid var(--stroke);background:rgba(11,14,19,.8);backdrop-filter:blur(6px)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0}
+.nav{display:flex;gap:6px}
+.nav a{padding:8px 12px;border-radius:12px;color:var(--muted)}
+.nav a.active,.nav a:hover{background:rgba(255,255,255,.1);color:#fff}
+
+.footer{border-top:1px solid var(--stroke)}
+.footer-inner{padding:16px 0;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+
+/* Badges & misc */
+.badge{display:inline-flex;align-items:center;border:1px solid var(--stroke);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:12px}
+pre.code{background:#0a0a0a;color:#eee;padding:12px;border-radius:12px;overflow:auto}
