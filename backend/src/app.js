@@ -12,10 +12,56 @@ const app = express();
 // Trust proxy (needed for correct IPs when behind Nginx/Render)
 app.set('trust proxy', 1);
 
+/**
+ * CORS – allow:
+ *  - local dev: http://localhost:5173
+ *  - Vercel:    https://private-jet-pwt8.vercel.app
+ *
+ * We keep it explicit so you don't fight env vars.
+ */
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://private-jet-pwt8.vercel.app',
+];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow non-browser tools (no origin)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Block anything else (you can log if you want)
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true,
+  })
+);
+
+// Handle preflight for all routes
+app.options(
+  '*',
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked origin (OPTIONS): ${origin}`));
+    },
+    credentials: true,
+  })
+);
+
 // Security headers
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 
 // Gzip
 app.use(compression());
@@ -32,56 +78,12 @@ if (process.env.NODE_ENV === 'production') {
   app.use(morgan('dev'));
 }
 
-/**
- * CORS
- * - Local dev: http://localhost:5173
- * - Production frontend: https://private-jet-pwt8.vercel.app
- * - Optional: CLIENT_URL env (extra/custom)
- */
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://private-jet-pwt8.vercel.app',
-];
-
-// If you set CLIENT_URL in Render, we also accept that
-if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
-  allowedOrigins.push(process.env.CLIENT_URL);
-}
-
-app.use(
-  cors({
-    origin(origin, callback) {
-      // Allow non-browser tools like curl/Postman with no Origin header
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      console.warn('[CORS] Blocked origin:', origin);
-      return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
-  })
-);
-
-// Optional: preflight for all routes
-app.options('*', cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
-
 // Rate limiting (tighter in prod)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 100 : 200,
   standardHeaders: 'draft-7',
-  legacyHeaders: false
+  legacyHeaders: false,
 });
 app.use(limiter);
 
@@ -91,7 +93,7 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     env: process.env.NODE_ENV || 'development',
     time: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
@@ -112,7 +114,7 @@ app.use((err, req, res, next) => {
   console.error('[ERROR]', err);
   const status = err.status || 500;
   res.status(status).json({
-    message: err.message || 'Internal Server Error'
+    message: err.message || 'Internal Server Error',
   });
 });
 
