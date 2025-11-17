@@ -32,11 +32,48 @@ if (process.env.NODE_ENV === 'production') {
   app.use(morgan('dev'));
 }
 
-// CORS
-const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-app.use(cors({
-  origin: allowedOrigin,
-  credentials: true
+/**
+ * CORS
+ * - Local dev: http://localhost:5173
+ * - Production frontend: https://private-jet-pwt8.vercel.app
+ * - Optional: CLIENT_URL env (extra/custom)
+ */
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://private-jet-pwt8.vercel.app',
+];
+
+// If you set CLIENT_URL in Render, we also accept that
+if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Allow non-browser tools like curl/Postman with no Origin header
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.warn('[CORS] Blocked origin:', origin);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
+
+// Optional: preflight for all routes
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
 }));
 
 // Rate limiting (tighter in prod)
