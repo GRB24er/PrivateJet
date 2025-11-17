@@ -15,43 +15,20 @@ app.set('trust proxy', 1);
 /**
  * CORS – allow:
  *  - local dev: http://localhost:5173
- *  - Vercel:    https://private-jet-pwt8.vercel.app
+ *  - old Vercel: https://private-jet-pwt8.vercel.app
+ *  - new Vercel: https://private-jet-iota.vercel.app
  *
- * We keep it explicit so you don't fight env vars.
+ * No throwing, no fancy callback — just let cors handle preflight.
  */
 const allowedOrigins = [
   'http://localhost:5173',
   'https://private-jet-pwt8.vercel.app',
+  'https://private-jet-iota.vercel.app',
 ];
 
 app.use(
   cors({
-    origin(origin, callback) {
-      // Allow non-browser tools (no origin)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Block anything else (you can log if you want)
-      return callback(new Error(`CORS blocked origin: ${origin}`));
-    },
-    credentials: true,
-  })
-);
-
-// Handle preflight for all routes
-app.options(
-  '*',
-  cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error(`CORS blocked origin (OPTIONS): ${origin}`));
-    },
+    origin: allowedOrigins,
     credentials: true,
   })
 );
