@@ -12,27 +12,6 @@ const app = express();
 // Trust proxy (needed for correct IPs when behind Nginx/Render)
 app.set('trust proxy', 1);
 
-/**
- * CORS – allow:
- *  - local dev: http://localhost:5173
- *  - old Vercel: https://private-jet-pwt8.vercel.app
- *  - new Vercel: https://private-jet-iota.vercel.app
- *
- * No throwing, no fancy callback — just let cors handle preflight.
- */
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://private-jet-pwt8.vercel.app',
-  'https://private-jet-iota.vercel.app',
-];
-
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-  })
-);
-
 // Security headers
 app.use(
   helmet({
@@ -54,6 +33,43 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   app.use(morgan('dev'));
 }
+
+/**
+ * CORS – allow Vercel + local dev
+ */
+const allowedOrigins = [
+  process.env.CLIENT_URL,          // e.g. https://private-jet-two.vercel.app
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+].filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow tools / curl with no Origin
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.warn('[CORS] Blocked origin:', origin);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+  ],
+};
+
+// Main CORS middleware (all routes)
+app.use(cors(corsOptions));
+// Explicit preflight handler for ALL routes
+app.options('*', cors(corsOptions));
 
 // Rate limiting (tighter in prod)
 const limiter = rateLimit({
